@@ -17,7 +17,7 @@ int initll(threadll* ll){
 }
 
 //insert to global linked list
-node* insertll(threadll* ll, mrthread t){
+node* insertll(threadll* ll, mrthread* t){
     node* temp;
     temp = (node*)malloc(sizeof(node));
     if(temp == NULL){
@@ -81,7 +81,7 @@ int thread_create(int* tid, void *(*f) (void *), void *arg){
         free(thread);
         return -1;
     }
-    thread->kernel_tid = kernel_tid;
+    insertedNode->thread->kernel_tid = kernel_tid;
     return 0;
 }
 
@@ -89,14 +89,14 @@ int thread_join(int tid, void **retval){
     node *p = thread_list.head;
     int found = 0;
     while(p){
-        if(p->thread.user_tid == tid){
+        if(p->thread->user_tid == tid){
             found = 1;
             break;
         }
         p = p->next;
     }
     if(found){
-        waitpid(p->thread.kernel_tid, NULL, NULL);
+        waitpid(p->thread->kernel_tid, NULL, NULL);
     }
     //delete the thread from thread_list
 }

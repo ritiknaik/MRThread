@@ -17,7 +17,7 @@ typedef struct mrthread{
 } mrthread;
 
 typedef struct node{
-    struct mrthread thread;
+    struct mrthread* thread;
     struct node* next;
 }node;
 
