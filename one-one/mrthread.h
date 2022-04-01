@@ -32,3 +32,4 @@ node* insertll(threadll* ll, mrthread t);
 int deletell(threadll* ll, mrthread t);
 
 int thread_create(int* tid, void *(*f) (void *), void *arg);
+int thread_join(int tid, void **retval);

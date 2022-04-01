@@ -1,6 +1,9 @@
 #include<mrthread.h>
-#include<mman.h>
+#include<sys/mman.h>
 #include<errno.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #define STACK_SIZE 4096
 
 threadll thread_list;
@@ -80,4 +83,20 @@ int thread_create(int* tid, void *(*f) (void *), void *arg){
     }
     thread->kernel_tid = kernel_tid;
     return 0;
+}
+
+int thread_join(int tid, void **retval){
+    node *p = thread_list.head;
+    int found = 0;
+    while(p){
+        if(p->thread.user_tid == tid){
+            found = 1;
+            break;
+        }
+        p = p->next;
+    }
+    if(found){
+        waitpid(p->thread.kernel_tid, NULL, NULL);
+    }
+    //delete the thread from thread_list
 }
