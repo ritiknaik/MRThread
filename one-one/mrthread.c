@@ -6,7 +6,12 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include<signal.h>
 #include<sched.h>
+#include<sys/resource.h>
+
+#define CLONE_ALL_FLAGS CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_SYSVSEM|CLONE_PARENT_SETTID|SIGCHLD
+
 
 threadll thread_list;
 int num_thread = 1;
@@ -25,10 +30,15 @@ void* allocate_stack(size_t size){
 //wrapper to pass the clone system call
 int wrapper(void* farg){
     mrthread *temp;
+    FILE* fp;
+    fp=fopen("output.txt", "w+");
+
     printf("inside wrapper\n");
+    fflush(stdout);
     temp = (mrthread*)farg;
+    fclose(fp);
     temp->return_value = temp->f(temp->arg);
-    printf("stack: %d\n",temp->kernel_tid);
+    // fprintf(fp, "stack: %d\n",temp->kernel_tid);
     return 0;
 }
 
@@ -73,7 +83,7 @@ int thread_join(mrthread_t tid, void **retval){
     printf("inside join\n");
     node *p = thread_list.head;
     int found = 0;
-    int ret;
+    int wstatus;
     while(p){
         if(p->thread->kernel_tid == tid){
             found = 1;
@@ -85,11 +95,17 @@ int thread_join(mrthread_t tid, void **retval){
     if(found){
 
         // ret = syscall(SYS_futex, &p->thread->futex, FUTEX_WAIT, tid, NULL, NULL, 0);
-        printf("waiting\n");
-        waitpid(tid, NULL, 0);
+        printf("waiting for %d\n", tid);
+        int w = waitpid(tid, &wstatus, 0);
+        if(w == -1)
+            perror("waitpid343");
+        if(WIFEXITED(wstatus))
+            printf("child exited\n");
+        else
+            printf("child running\n");
     }
-    if(ret == -1 && errno != EAGAIN)
-        return ret;
+    // if( == -1 && errno != EAGAIN)
+    //     return ret;
 
     if(retval)
         *retval = p->thread->return_value;

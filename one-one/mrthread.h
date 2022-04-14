@@ -2,7 +2,6 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<unistd.h>
-#define CLONE_ALL_FLAGS CLONE_VM|CLONE_FS|CLONE_FILES
 
 typedef pid_t mrthread_t;
 

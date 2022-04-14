@@ -11,7 +11,8 @@ void *myThreadFun(void *vargo)
     sleep(3);
     FILE* fp;
     fp = fopen("output.txt", "w+");
-    fprintf(fp, "Printing from Thread \n");
+    printf("Printing from Thread \n");
+    fflush(stdout);
     fclose(fp);
     return NULL;
 }
@@ -20,7 +21,7 @@ int main()
 {
     mrthread_t thread_id;
     printf("Before Thread\n");
-    thread_create(&thread_id,myThreadFun,NULL);
+    thread_create(&thread_id, myThreadFun, NULL);
     printf("main runnning\n");
     thread_join(thread_id, NULL);
     //pthread_create(&thread_id, NULL, myThreadFun, NULL);
