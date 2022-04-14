@@ -19,6 +19,7 @@ typedef struct mrthread{
 
 int thread_create(int* tid, void *(*f) (void *), void *arg);
 int thread_join(int tid, void **retval);
+void thread_exit(void *retval);
 
 
 #define STACK_SIZE 4096

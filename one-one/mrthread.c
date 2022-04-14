@@ -33,7 +33,7 @@ int wrapper(void* farg){
     FILE* fp;
     fp=fopen("output.txt", "w+");
 
-    printf("inside wrapper\n");
+    //printf("inside wrapper\n");
     fflush(stdout);
     temp = (mrthread*)farg;
     fclose(fp);
@@ -44,7 +44,10 @@ int wrapper(void* farg){
 
 //create a thread
 int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
-    printf("inside thread_create\n");
+    //printf("inside thread_create\n");
+    if(tid == NULL || f == NULL){
+        return EINVAL;
+    }
     void* stack = allocate_stack(STACK_SIZE);
     int t;
     static int initial = 0;
@@ -61,11 +64,11 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     thread->f = f;
     thread->stack = stack;
     thread->stack_size = STACK_SIZE;
-    printf("before insertion\n");
+    //printf("before insertion\n");
     node* insertedNode = insertll(&thread_list, thread);
-    printf("after insertion\n");
+    //printf("after insertion\n");
     mrthread_t kernel_tid = clone(wrapper, thread->stack + STACK_SIZE, CLONE_ALL_FLAGS, thread, &thread->futex, thread, &thread->futex);
-    printf("tid: %d\n", kernel_tid);
+    //printf("tid: %d\n", kernel_tid);
     if(kernel_tid == -1){
         perror("Clone error");
         free(stack);
@@ -75,12 +78,12 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     insertedNode->thread->kernel_tid = kernel_tid;
     num_thread++;
     *tid = kernel_tid;
-    printf("finished thread create\n");
+    //printf("finished thread create\n");
     return 0;
 }
 
 int thread_join(mrthread_t tid, void **retval){
-    printf("inside join\n");
+    //printf("inside join\n");
     node *p = thread_list.head;
     int found = 0;
     int wstatus;
@@ -91,19 +94,21 @@ int thread_join(mrthread_t tid, void **retval){
         }
         p = p->next;
     }
-    printf("after search\n");
+    //printf("after search\n");
     if(found){
 
         // ret = syscall(SYS_futex, &p->thread->futex, FUTEX_WAIT, tid, NULL, NULL, 0);
-        printf("waiting for %d\n", tid);
+        //printf("waiting for %d\n", tid);
         int w = waitpid(tid, &wstatus, 0);
         if(w == -1)
-            perror("waitpid343");
-        if(WIFEXITED(wstatus))
-            printf("child exited\n");
-        else
-            printf("child running\n");
+            perror("waitpid");
+        // if(WIFEXITED(wstatus))
+        //     printf("child exited\n");
+        // else
+        //     printf("child running\n");
     }
+    else
+        return ESRCH;
     // if( == -1 && errno != EAGAIN)
     //     return ret;
 
@@ -114,4 +119,27 @@ int thread_join(mrthread_t tid, void **retval){
     }
     num_thread--;
     return 0;
+}
+
+void thread_exit(void *retval){
+    if(retval == NULL)
+        return;
+    pid_t cur_pid = getpid();
+    node *p = thread_list.head;
+    int found = 0;
+    while(p){
+        if(p->thread->kernel_tid == cur_pid){
+            found = 1;
+            break;
+        }
+        p = p->next;
+    }
+    if(found){
+        p->thread->return_value = retval;
+        kill(cur_pid, SIGKILL);  
+        munmap(p->thread->stack, STACK_SIZE);
+        p->thread->stack = NULL;
+        free(p->thread);
+    }
+    return;
 }

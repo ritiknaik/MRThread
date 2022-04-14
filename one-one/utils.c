@@ -31,7 +31,7 @@ node* insertll(threadll* ll, mrthread* t){
 }
 
 int deletell(threadll* ll, mrthread_t tid){
-    printf("inside deletell\n");
+    //printf("inside deletell\n");
     node* tmp = ll->head;
     if(tmp == NULL){
         return -1;
@@ -39,12 +39,12 @@ int deletell(threadll* ll, mrthread_t tid){
     if(tmp->thread->kernel_tid == tid){
         ll->head = ll->head->next;
         if(tmp->thread->stack){
-            printf("before unmap\n");
+            //printf("before unmap\n");
             if(munmap(tmp->thread->stack, STACK_SIZE)){
                 return errno;
             }
         }
-        printf("after unmap\n");
+        //printf("after unmap\n");
         free(tmp->thread);
         free(tmp);
         if(ll->head == NULL){
