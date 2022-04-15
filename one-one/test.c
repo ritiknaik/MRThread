@@ -2,8 +2,9 @@
 #include "tests.h"
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
 
-int *i;
+int *i, infinite, mask;
 void to_fail(int retval){
     if(retval != 0){
         printf("Error value : %s\n", strerror(retval));
@@ -42,6 +43,27 @@ void *thread3(){
     int r = 1;
     i = &r;
     return i;
+}
+
+void *thread4(){
+    printf("In thread having infinite loop\n");
+    int r = 30;
+    mrthread_t t3;
+    while(infinite);
+    thread_create(&t3, thread3, NULL);
+    thread_join(t3, NULL);
+    int *p = &r;
+    return p;
+}
+
+void *thread5(){
+    mask = 1;
+    while(mask);
+}
+
+void sigusr1_handler(){
+    printf("Inside handler\n");
+	infinite = 0;
 }
 
 int main(){
@@ -109,7 +131,7 @@ int main(){
     }
 
     LINE;
-    printf("3] Thread Exit Testing\n");
+    printf("2] Thread Exit Testing\n");
     LINE;
     printf("Test 1 --> Created Thread Uses Return To Exit\n");{
         void *ret;
@@ -124,7 +146,7 @@ int main(){
         else
             FAILEDTEST
     }
-    printf("2] Created Thread Uses mthread_exit()\n");
+    printf("Test 2 --> Created Thread Uses mthread_exit()\n");
     {
         void *ret;
         mrthread_t tid;
@@ -139,6 +161,55 @@ int main(){
             FAILEDTEST
     }
 
+    LINE;
+    printf("3] Thread Kill Testing\n");
+    LINE;
+    printf("Test 1 --> Send invalid signal\n");
+    {
+        mrthread_t tid;
+        struct sigaction action;
+        action.sa_handler = sigusr1_handler;
+        sigaction(SIGUSR1, &action, NULL);
+        infinite = 1;
+        Test(thread_create(&tid, thread4, NULL));
+        Test(thread_kill(tid, -1));
+        infinite = 0;
+        Test(thread_join(tid, NULL));
+        PASSEDTEST;
+    }
+
+    printf("Test 2 --> Send signal to a thread\n");
+    {
+        void *ret;
+        mrthread_t tid;
+        struct sigaction action;
+        action.sa_handler = sigusr1_handler;
+        sigaction(SIGUSR1, &action, NULL);
+        infinite = 1;
+        Test(thread_create(&tid, thread4, NULL));
+        Test(thread_kill(tid, SIGUSR1));
+        Test(thread_join(tid, &ret));
+        if(*(int*)ret == 30)
+            PASSEDTEST
+        else 
+            FAILEDTEST
+    }
+
+    printf("Test 3 --> Checking signal handling for SIGTSTP SIGCONT SIGKILL\n");
+    {
+        mrthread_t tid;
+        Test(thread_create(&tid, thread5, NULL));
+        printf("Sending SIGTSTP signal\n");
+        Test(thread_kill(tid, SIGTSTP));
+        printf("Sending SIGCONT signal\n");
+        Test(thread_kill(tid, SIGCONT));
+        printf("Sending SIGKILL signal\n");
+        int ret = Test(thread_kill(tid, SIGKILL));
+        if(ret == 0)
+            PASSEDTEST
+        else 
+            FAILEDTEST
+        Test(thread_join(tid, NULL));  
+    }
     return 0;
 }
-

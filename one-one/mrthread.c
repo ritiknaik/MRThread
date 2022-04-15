@@ -165,13 +165,14 @@ int thread_kill(mrthread_t tid, int sig){
         return EINVAL;
 
     if(sig > 0){
-        pid_t th_group_id = getpid();
-        int ret = tgkill(th_group_id, tid, sig);
-        if (ret == -1)
-        {
-            perror("tgkill");
-            return ret;
-        }
+        // pid_t th_group_id = getpid();
+        // int ret = tgkill(th_group_id, tid, sig);
+        kill(tid, sig);
+        // if (ret == -1)
+        // {
+        //     perror("tgkill");
+        //     return ret;
+        // }
     }
     return 0;
 }
