@@ -54,10 +54,17 @@ int deletell(threadll* ll, mrthread_t tid){
     }
     while(tmp->next){
         if(tmp->next->thread->kernel_tid == tid){
+            node* tn = tmp->next->next;
             if(tmp->next == ll->tail){
                 ll->tail = tmp;
             }
-            node* tn = tmp->next->next;
+            // if (tmp->next->thread->stack)
+            // {
+            //     if (munmap(tmp->next->thread->stack, STACK_SIZE))
+            //     {
+            //         return errno;
+            //     }
+            // }
             free(tmp->next->thread);
             free(tmp->next);
             tmp->next = tn;
@@ -66,4 +73,15 @@ int deletell(threadll* ll, mrthread_t tid){
         tmp = tmp->next;
     }
     return 0;
+}
+
+node* get_node(threadll* ll, mrthread_t tid){
+    node* p = ll->head;
+    while(p){
+        if(p->thread->kernel_tid == tid){
+            return p;
+        }
+        p = p->next;
+    }
+    return NULL;
 }

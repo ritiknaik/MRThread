@@ -16,11 +16,11 @@ typedef struct mrthread{
     void* return_value;
 } mrthread;
 
-
+void cleanup();
 int thread_create(int* tid, void *(*f) (void *), void *arg);
 int thread_join(int tid, void **retval);
 void thread_exit(void *retval);
-
+int thread_kill(mrthread_t tid, int sig);
 
 #define STACK_SIZE 4096
 
@@ -38,3 +38,4 @@ typedef struct threadll{
 int initll(threadll* ll);
 node* insertll(threadll* ll, mrthread* t);
 int deletell(threadll* ll, int tid);
+node* get_node(threadll* ll, mrthread_t tid);

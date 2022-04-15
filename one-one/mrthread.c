@@ -15,6 +15,29 @@
 
 threadll thread_list;
 int num_thread = 1;
+
+void cleanup(){
+    // printf("cleanedup\n");
+    node *tmp;
+    tmp = thread_list.head;
+    while(tmp->next != NULL){
+        node *p = tmp;
+        tmp = tmp->next;
+        deletell(&thread_list, p->thread->kernel_tid);
+        num_thread--;
+    }
+    // printf("numthread %d\n", num_thread);
+}
+
+static void init(){
+    initll(&thread_list);
+    mrthread* thread = (mrthread*)calloc(1, sizeof(mrthread));
+    node *p = insertll(&thread_list, thread);
+    p->thread->kernel_tid = getpid();
+    atexit(cleanup);
+    return;
+}
+
 //allocatea stack of the thread
 void* allocate_stack(size_t size){
     void* stack = NULL;
@@ -30,13 +53,13 @@ void* allocate_stack(size_t size){
 //wrapper to pass the clone system call
 int wrapper(void* farg){
     mrthread *temp;
-    FILE* fp;
-    fp=fopen("output.txt", "w+");
+    // FILE* fp;
+    // fp=fopen("output.txt", "w+");
 
     //printf("inside wrapper\n");
     fflush(stdout);
     temp = (mrthread*)farg;
-    fclose(fp);
+    // fclose(fp);
     temp->return_value = temp->f(temp->arg);
     // fprintf(fp, "stack: %d\n",temp->kernel_tid);
     return 0;
@@ -53,7 +76,7 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     static int initial = 0;
     if(initial == 0){
         initial = 1;
-        initll(&thread_list);
+        init(&thread_list);
     }
     mrthread* thread = (mrthread*)calloc(1, sizeof(mrthread));
     if(thread == NULL){
@@ -84,18 +107,11 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
 
 int thread_join(mrthread_t tid, void **retval){
     //printf("inside join\n");
-    node *p = thread_list.head;
-    int found = 0;
+    node *p = get_node(&thread_list, tid);
+    // int found = 0;
     int wstatus;
-    while(p){
-        if(p->thread->kernel_tid == tid){
-            found = 1;
-            break;
-        }
-        p = p->next;
-    }
     //printf("after search\n");
-    if(found){
+    if(p){
 
         // ret = syscall(SYS_futex, &p->thread->futex, FUTEX_WAIT, tid, NULL, NULL, 0);
         //printf("waiting for %d\n", tid);
@@ -125,16 +141,16 @@ void thread_exit(void *retval){
     if(retval == NULL)
         return;
     pid_t cur_pid = getpid();
-    node *p = thread_list.head;
-    int found = 0;
-    while(p){
-        if(p->thread->kernel_tid == cur_pid){
-            found = 1;
-            break;
-        }
-        p = p->next;
-    }
-    if(found){
+    node *p = get_node(&thread_list, cur_pid);
+    //int found = 0;
+    // while(p){
+    //     if(p->thread->kernel_tid == cur_pid){
+    //         found = 1;
+    //         break;
+    //     }
+    //     p = p->next;
+    // }
+    if(p){
         p->thread->return_value = retval;
         kill(cur_pid, SIGKILL);  
         munmap(p->thread->stack, STACK_SIZE);
@@ -142,4 +158,20 @@ void thread_exit(void *retval){
         free(p->thread);
     }
     return;
+}
+
+int thread_kill(mrthread_t tid, int sig){
+    if(sig < 0 || sig > 64)
+        return EINVAL;
+
+    if(sig > 0){
+        pid_t th_group_id = getpid();
+        int ret = tgkill(th_group_id, tid, sig);
+        if (ret == -1)
+        {
+            perror("tgkill");
+            return ret;
+        }
+    }
+    return 0;
 }

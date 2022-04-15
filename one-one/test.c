@@ -109,7 +109,7 @@ int main(){
     }
 
     LINE;
-    printf("2] Thread Exit Testing\n");
+    printf("3] Thread Exit Testing\n");
     LINE;
     printf("Test 1 --> Created Thread Uses Return To Exit\n");{
         void *ret;
