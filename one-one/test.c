@@ -107,4 +107,38 @@ int main(){
         }
         PASSEDTEST;
     }
+
+    LINE;
+    printf("2] Thread Exit Testing\n");
+    LINE;
+    printf("Test 1 --> Created Thread Uses Return To Exit\n");{
+        void *ret;
+        mrthread_t tid;
+
+        Test(thread_create(&tid, thread1, NULL));
+        Test(thread_join(tid, &ret));
+        printf("Expected return value: 1\n");
+        printf("Actual return value: %d\n", *(int*)ret);
+        if(*(int*)ret == 1)
+            PASSEDTEST
+        else
+            FAILEDTEST
+    }
+    printf("2] Created Thread Uses mthread_exit()\n");
+    {
+        void *ret;
+        mrthread_t tid;
+
+        Test(thread_create(&tid, thread2, NULL));
+        Test(thread_join(tid, &ret));
+        printf("Expected Exit Status is %d\n", 1010);
+        printf("Actual   Exit Status is %d\n", *(int*) ret);
+        if(*(int*)ret == 1010)
+            PASSEDTEST
+        else
+            FAILEDTEST
+    }
+
+    return 0;
 }
+
