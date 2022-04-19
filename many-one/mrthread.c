@@ -122,3 +122,38 @@ int thread_create(int* tid, void *(*f) (void *), void *arg){
     unblock_timer();
     return 0;
 }
+
+int thread_join(int tid, void **retval){
+    block_timer();
+    if(tid == running_thread->user_tid){
+        return EDEADLK;
+    }
+
+    mrthread* thread_to_join = get_node(&threads, tid);
+    if(!thread_to_join){
+        return ESRCH;
+    }
+
+    for(int i = 0; i < thread_to_join->wait_count; i++){
+        if(thread_to_join->waiting_threads[i] == tid){
+            perror("Deadlock");
+            return EDEADLK;
+        }
+    }
+    if(thread_to_join->state == TERMINATED){
+        unblock_timer();
+        return EINVAL;
+    }
+
+    thread_to_join->waiting_threads = (int*)realloc(thread_to_join->waiting_threads, (++(thread_to_join->wait_count)) * sizeof(int));
+    thread_to_join->waiting_threads[thread_to_join->wait_count - 1] = running_thread->user_tid;
+    running_thread->state = WAITING;
+    unblock_timer();
+    while(thread_to_join->state != TERMINATED);
+    block_timer();
+    if(retval){
+        *retval = thread_to_join->return_value;
+    }
+    unblock_timer();
+    return 0;
+}
