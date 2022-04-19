@@ -42,8 +42,7 @@ static void init(){
 void* allocate_stack(size_t size){
     void* stack = NULL;
     stack = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
-    if (stack == MAP_FAILED)
-    {
+    if (stack == MAP_FAILED){
         perror("Stack Allocation");
         return NULL;
     }

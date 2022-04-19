@@ -1,6 +1,6 @@
 #include "mrthread.h"
 
-int init_queue(thread_queue *q){
+int init_q(thread_queue *q){
     q->start = NULL;
     q->num = 0;
     q->end = NULL;

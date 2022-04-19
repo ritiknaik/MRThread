@@ -5,6 +5,9 @@
 #include<stdatomic.h>
 #include<setjmp.h>
 #include<signal.h>
+#include<errno.h>
+#include<sys/mman.h>
+#include<sys/time.h>
 
 #define STACK_SIZE 4096
 
@@ -16,6 +19,7 @@
 
 #define JB_RSP 6
 #define JB_PC 7
+
 typedef pid_t mrthread_t;
 
 typedef struct mrthread{
@@ -30,10 +34,19 @@ typedef struct mrthread{
     sigset_t signal_set;
     jmp_buf context;
     int state;
+    int *waiting_threads; //list of all waiters on this process
+    int wait_count;
 }mrthread;
 
 void cleanup(thread_queue *q);
 long int mangle(long int p);
+void block_timer();
+void unblock_timer();
+void* allocate_stack(size_t size);
+void init();
+void timer_init();
+void set_context(mrthread* thread);
+int wrapper(void* farg);
 
 int thread_create(int* tid, void *(*f) (void *), void *arg);
 int thread_join(int tid, void **retval);
