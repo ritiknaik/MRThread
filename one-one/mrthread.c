@@ -19,7 +19,7 @@ int num_thread = 1;
 void cleanup(){
     // printf("cleanedup\n");
     node *tmp;
-    tmp = thread_list.head;
+    tmp = thread_list.start;
     while(tmp->next != NULL){
         node *p = tmp;
         tmp = tmp->next;

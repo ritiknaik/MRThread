@@ -30,8 +30,8 @@ typedef struct node{
 }node;
 
 typedef struct threadll{
-    struct node* head;
-    struct node* tail;
+    struct node* start;
+    struct node* end;
 } threadll;
 
 

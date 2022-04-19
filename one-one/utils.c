@@ -6,7 +6,7 @@
 int initll(threadll* ll){
     if (!ll)
         return -1;
-    ll->head = ll->tail = NULL;
+    ll->start = ll->end = NULL;
     return 0;
 }
 
@@ -20,24 +20,24 @@ node* insertll(threadll* ll, mrthread* t){
     }
     temp->next = NULL;
     temp->thread = t;
-    if(ll->head == NULL){
-        ll->head = ll->tail = temp;
+    if(ll->start == NULL){
+        ll->start = ll->end = temp;
     }
     else{
-        ll->tail->next = temp;
-        ll->tail = temp;
+        ll->end->next = temp;
+        ll->end = temp;
     }
     return temp;
 }
 
 int deletell(threadll* ll, mrthread_t tid){
     //printf("inside deletell\n");
-    node* tmp = ll->head;
+    node* tmp = ll->start;
     if(tmp == NULL){
         return -1;
     }
     if(tmp->thread->kernel_tid == tid){
-        ll->head = ll->head->next;
+        ll->start = ll->start->next;
         if(tmp->thread->stack){
             //printf("before unmap\n");
             if(munmap(tmp->thread->stack, STACK_SIZE)){
@@ -47,16 +47,16 @@ int deletell(threadll* ll, mrthread_t tid){
         //printf("after unmap\n");
         free(tmp->thread);
         free(tmp);
-        if(ll->head == NULL){
-            ll->tail = ll->head;
+        if(ll->start == NULL){
+            ll->end = ll->start;
         }
         return 0;
     }
     while(tmp->next){
         if(tmp->next->thread->kernel_tid == tid){
             node* tn = tmp->next->next;
-            if(tmp->next == ll->tail){
-                ll->tail = tmp;
+            if(tmp->next == ll->end){
+                ll->end = tmp;
             }
             // if (tmp->next->thread->stack)
             // {
@@ -76,7 +76,7 @@ int deletell(threadll* ll, mrthread_t tid){
 }
 
 node* get_node(threadll* ll, mrthread_t tid){
-    node* p = ll->head;
+    node* p = ll->start;
     while(p){
         if(p->thread->kernel_tid == tid){
             return p;

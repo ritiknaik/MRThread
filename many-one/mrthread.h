@@ -2,40 +2,58 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<unistd.h>
+#include<stdatomic.h>
+#include<setjmp.h>
+#include<signal.h>
 
+#define STACK_SIZE 4096
+
+#define RUNNING 0
+#define READY 1
+#define TERMINATED 2
+#define WAITING 3
+#define JOINED 4
+
+#define JB_RSP 6
+#define JB_PC 7
 typedef pid_t mrthread_t;
 
 typedef struct mrthread{
     int user_tid;
-    mrthread_t kernel_tid;
-    int32_t futex;
+    // mrthread_t kernel_tid;
+    // int32_t futex;
     void* stack;
     int stack_size;
     void *(*f) (void *);
     void* arg;
     void* return_value;
-} mrthread;
+    sigset_t signal_set;
+    jmp_buf context;
+    int state;
+}mrthread;
 
-void cleanup();
+void cleanup(thread_queue *q);
+long int mangle(long int p);
+
 int thread_create(int* tid, void *(*f) (void *), void *arg);
 int thread_join(int tid, void **retval);
 void thread_exit(void *retval);
 int thread_kill(mrthread_t tid, int sig);
 
-#define STACK_SIZE 4096
 
 typedef struct node{
     struct mrthread* thread;
     struct node* next;
 }node;
 
-typedef struct threadll{
-    struct node* head;
-    struct node* tail;
-} threadll;
+typedef struct thread_queue{
+    int num;
+    node *start;
+    node *end;
+}thread_queue;
 
-
-int initll(threadll* ll);
-node* insertll(threadll* ll, mrthread* t);
-int deletell(threadll* ll, int tid);
-node* get_node(threadll* ll, mrthread_t tid);
+int init_q(thread_queue* q);
+void enqueue_q(thread_queue* q, mrthread* t);
+mrthread* dequeue_q(thread_queue* q);
+mrthread* get_node(thread_queue* q, mrthread_t tid);
+int is_empty_q(thread_queue *q);
