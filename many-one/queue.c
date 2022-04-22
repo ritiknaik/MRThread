@@ -59,15 +59,36 @@ int is_empty_q(thread_queue *q){
     return 0;
 }
 
-void cleanup(thread_queue *q){
-    node *temp = q->start;
-    node *temp2;
-    for(int i = 0; i < q->num; i++){
-        temp2 = temp->next;
-        free(temp->thread);
-        free(temp);
-        temp = temp2;
-    }    
-    q->num = 0;
-    return;
+// void cleanup(thread_queue *q){
+//     node *temp = q->start;
+//     node *temp2;
+//     for(int i = 0; i < q->num; i++){
+//         temp2 = temp->next;
+//         free(temp->thread);
+//         free(temp);
+//         temp = temp2;
+//     }    
+//     q->num = 0;
+//     return;
+// }
+
+mrthread* thread_to_sched(thread_queue* q){
+    mrthread* p;
+    p = dequeue_q(q);
+    if(!p){
+        return NULL;
+    }
+    if(p->state == READY){
+        return p;
+    }
+    else{
+        for(int i = 0; i < q->num; i++){
+            enqueue_q(q, p);
+            p = dequeue_q(q);
+            if(p->state == READY){
+                return p;
+            }
+        }
+    }
+    return NULL;
 }

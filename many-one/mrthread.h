@@ -6,6 +6,7 @@
 #include<setjmp.h>
 #include<signal.h>
 #include<errno.h>
+#include<string.h>
 #include<sys/mman.h>
 #include<sys/time.h>
 
@@ -38,7 +39,7 @@ typedef struct mrthread{
     int wait_count;
 }mrthread;
 
-void cleanup(thread_queue *q);
+// void cleanup(thread_queue *q);
 long int mangle(long int p);
 void block_timer();
 void unblock_timer();
@@ -47,6 +48,8 @@ void init();
 void timer_init();
 void set_context(mrthread* thread);
 int wrapper(void* farg);
+void raise_pending_signals();
+void scheduler();
 
 int thread_create(int* tid, void *(*f) (void *), void *arg);
 int thread_join(int tid, void **retval);
@@ -70,3 +73,4 @@ void enqueue_q(thread_queue* q, mrthread* t);
 mrthread* dequeue_q(thread_queue* q);
 mrthread* get_node(thread_queue* q, mrthread_t tid);
 int is_empty_q(thread_queue *q);
+mrthread* thread_to_sched(thread_queue* q);
