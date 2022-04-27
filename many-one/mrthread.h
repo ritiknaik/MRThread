@@ -10,7 +10,7 @@
 #include<sys/mman.h>
 #include<sys/time.h>
 
-#define STACK_SIZE 4096
+#define STACK_SIZE 65536
 
 #define RUNNING 0
 #define READY 1
@@ -18,6 +18,7 @@
 #define WAITING 3
 #define JOINED 4
 
+#define JB_RBP 5
 #define JB_RSP 6
 #define JB_PC 7
 
@@ -40,6 +41,7 @@ typedef struct mrthread{
 }mrthread;
 
 // void cleanup(thread_queue *q);
+void alarm_handle();
 long int mangle(long int p);
 void block_timer();
 void unblock_timer();

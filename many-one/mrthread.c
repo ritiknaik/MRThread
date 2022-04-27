@@ -60,7 +60,7 @@ void timer_init(){
     
     struct sigaction timer_handler;
     memset(&timer_handler, 0, sizeof(timer_handler));
-    timer_handler.sa_handler = scheduler;
+    timer_handler.sa_handler = alarm_handle;
 	timer_handler.sa_flags = SA_RESTART;
 	timer_handler.sa_mask = mask;
    
@@ -76,6 +76,7 @@ void timer_init(){
 }
 
 void raise_pending_signals(){
+    //printf("raising signals\n");
     sigset_t to_raise;
     sigfillset(&to_raise);
     sigdelset(&to_raise, SIGALRM);
@@ -89,9 +90,17 @@ void raise_pending_signals(){
     return;
 }
 
+void alarm_handle(){
+    //printf("alarm\n");
+    scheduler();
+}
+
 void scheduler(){
     //printf("scheduler called\n");
+    // block_timer();
+    int a;
     if(setjmp(running_thread->context) == 0){
+        block_timer();
         if(running_thread->state != TERMINATED){
             running_thread->state = READY;
         }
@@ -104,11 +113,14 @@ void scheduler(){
         }
         running_thread->state = RUNNING;
         //printf("before longjmp\n");
+        //printf("tid of new: %d\n", running_thread->user_tid);
         //printf("jmpbuf: %s\n", running_thread->context);
         longjmp(running_thread->context, 1);
     }
     else{
+        // unblock_timer();
         raise_pending_signals();
+        unblock_timer();
         return;
     }
 }
@@ -126,12 +138,15 @@ int wrapper(void* farg){
 void set_context(mrthread* thread){
     setjmp(thread->context);
     thread->context[0].__jmpbuf[JB_RSP] = mangle((long int) thread->stack + STACK_SIZE - sizeof(long int));
+    thread->context[0].__jmpbuf[JB_RBP] = thread->context[0].__jmpbuf[JB_RSP];
 	thread->context[0].__jmpbuf[JB_PC] = mangle((long int) wrapper);
 }
 
 int thread_create(int* tid, void *(*f) (void *), void *arg){
+    //printf("create thread called\n");
     block_timer();
     if(tid == NULL || f == NULL){
+        unblock_timer();
         return EINVAL;
     }
     static int initial = 0;
@@ -159,7 +174,7 @@ int thread_create(int* tid, void *(*f) (void *), void *arg){
     sigemptyset(&(thread->signal_set));
 
     set_context(thread);
-    //printf("jmpbuf: %s", thread->context);
+    //printf("create jmpbuf: %s, tid: %d\n", thread->context, thread->user_tid);
     *tid = thread->user_tid;
     enqueue_q(&threads, thread);
     num_thread++;
@@ -175,6 +190,7 @@ int thread_join(int tid, void **retval){
     //printf("entered join\n");
     mrthread* thread_to_join = get_node(&threads, tid);
     if(!thread_to_join){
+        //printf("node not ofund\n");
         return ESRCH;
     }
     //printf("before deadlock\n");
@@ -186,7 +202,8 @@ int thread_join(int tid, void **retval){
     }
     if(thread_to_join->state == TERMINATED){
         unblock_timer();
-        return EINVAL;
+        //printf("terminated before joining\n");
+        return ESRCH;
     }
     //printf("before assigning\n");
     thread_to_join->waiting_threads = (int*)realloc(thread_to_join->waiting_threads, (++(thread_to_join->wait_count)) * sizeof(int));
@@ -218,7 +235,32 @@ void thread_exit(void *retval){
     for(int i = 0; i < running_thread->wait_count; i++){
         mrthread* t = get_node(&threads, running_thread->waiting_threads[i]);
         t->state = READY;
+        //printf("wait to ready done\n");
     }
     unblock_timer();
+    //printf("after exit\n");
     scheduler();
+}
+
+int thread_kill(mrthread_t tid, int sign){
+    block_timer();
+    if(sign < 0 || sign > 64){
+        unblock_timer();
+        return EINVAL;
+    }
+    if(running_thread->user_tid == tid){
+        raise(sign);
+        block_timer();
+        return 0;
+    }
+    mrthread* thread_to_signal = get_node(&threads, tid);
+    if(!thread_to_signal){
+        //printf("node not found\n");
+        unblock_timer();
+        return ESRCH;
+    }
+    sigaddset(&thread_to_signal->signal_set, sign);
+    //printf("added signal\n");
+    unblock_timer();
+    return 0;
 }

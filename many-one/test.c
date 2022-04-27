@@ -64,6 +64,7 @@ void *func5(){
 void sigusr1_handler(){
     printf("Inside handler\n");
 	infinite = 0;
+    printf("returned from handler\n");
 }
 
 int main(){
@@ -163,54 +164,54 @@ int main(){
     }
 
     PATTERN;
-    // printf("3] Thread Kill Testing\n");
-    // PATTERN;
-    // printf("Test 1 --> Send invalid signal\n");
-    // {
-    //     mrthread_t tid;
-    //     struct sigaction action;
-    //     action.sa_handler = sigusr1_handler;
-    //     sigaction(SIGUSR1, &action, NULL);
-    //     infinite = 1;
-    //     Test(thread_create(&tid, func4, NULL));
-    //     Test(thread_kill(tid, -1));
-    //     infinite = 0;
-    //     Test(thread_join(tid, NULL));
-    //     PASSEDTEST;
-    // }
+    printf("3] Thread Kill Testing\n");
+    PATTERN;
+    printf("Test 1 --> Send invalid signal\n");
+    {
+        mrthread_t tid;
+        struct sigaction action;
+        action.sa_handler = sigusr1_handler;
+        sigaction(SIGUSR1, &action, NULL);
+        infinite = 1;
+        Test(thread_create(&tid, func4, NULL));
+        Test(thread_kill(tid, -1));
+        infinite = 0;
+        Test(thread_join(tid, NULL));
+        PASSEDTEST;
+    }
 
-    // printf("Test 2 --> Send signal to a thread\n");
-    // {
-    //     void *ret;
-    //     mrthread_t tid;
-    //     struct sigaction action;
-    //     action.sa_handler = sigusr1_handler;
-    //     sigaction(SIGUSR1, &action, NULL);
-    //     infinite = 1;
-    //     Test(thread_create(&tid, func4, NULL));
-    //     Test(thread_kill(tid, SIGUSR1));
-    //     Test(thread_join(tid, &ret));
-    //     if(*(int*)ret == 30)
-    //         PASSEDTEST
-    //     else 
-    //         FAILEDTEST
-    // }
+    printf("Test 2 --> Send signal to a thread\n");
+    {
+        void *ret;
+        mrthread_t tid;
+        struct sigaction action;
+        action.sa_handler = sigusr1_handler;
+        sigaction(SIGUSR1, &action, NULL);
+        infinite = 1;
+        Test(thread_create(&tid, func4, NULL));
+        Test(thread_kill(tid, SIGUSR1));
+        Test(thread_join(tid, &ret));
+        if(*(int*)ret == 30)
+            PASSEDTEST
+        else 
+            FAILEDTEST
+    }
 
-    // printf("Test 3 --> Checking signal handling for SIGTSTP SIGCONT SIGKILL\n");
-    // {
-    //     mrthread_t tid;
-    //     Test(thread_create(&tid, func5, NULL));
-    //     printf("Sending SIGTSTP signal\n");
-    //     Test(thread_kill(tid, SIGTSTP));
-    //     printf("Sending SIGCONT signal\n");
-    //     Test(thread_kill(tid, SIGCONT));
-    //     printf("Sending SIGKILL signal\n");
-    //     int ret = Test(thread_kill(tid, SIGKILL));
-    //     if(ret == 0)
-    //         PASSEDTEST
-    //     else 
-    //         FAILEDTEST
-    //     Test(thread_join(tid, NULL));  
-    // }
+    printf("Test 3 --> Checking signal handling for SIGTSTP SIGCONT SIGKILL\n");
+    {
+        mrthread_t tid;
+        Test(thread_create(&tid, func5, NULL));
+        printf("Sending SIGTSTP signal\n");
+        Test(thread_kill(tid, SIGTSTP));
+        printf("Sending SIGCONT signal\n");
+        Test(thread_kill(tid, SIGCONT));
+        printf("Sending SIGKILL signal\n");
+        int ret = Test(thread_kill(tid, SIGKILL));
+        if(ret == 0)
+            PASSEDTEST
+        else 
+            FAILEDTEST
+        Test(thread_join(tid, NULL));  
+    }
     return 0;
 }
