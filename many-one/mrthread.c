@@ -76,14 +76,15 @@ void timer_init(){
 }
 
 void raise_pending_signals(){
-    //printf("raising signals\n");
     sigset_t to_raise;
     sigfillset(&to_raise);
     sigdelset(&to_raise, SIGALRM);
     sigprocmask(SIG_UNBLOCK, &to_raise, NULL);
     for(int j = 0; j < NSIG; j++){
         if(sigismember(&(running_thread->signal_set), j)){
+            //printf("raised signal %d\n", j);
             raise(j);
+            //printf("came back\n");
             sigdelset(&(running_thread->signal_set), j);
         }
     }
@@ -98,7 +99,7 @@ void alarm_handle(){
 void scheduler(){
     //printf("scheduler called\n");
     // block_timer();
-    int a;
+    // int a;
     if(setjmp(running_thread->context) == 0){
         block_timer();
         if(running_thread->state != TERMINATED){
@@ -125,14 +126,27 @@ void scheduler(){
     }
 }
 
-int wrapper(void* farg){
+void wrapper(void* farg){
     //printf("wrapper called\n");
     unblock_timer();
     //printf("before return\n");
     running_thread->return_value = running_thread->f(running_thread->arg);
+    //printf("*(int*)retval in wrapper %d\n", *(int*)running_thread->return_value);
+    //printf("retval in wrapper%d\n", running_thread->return_value);
     //printf("before exit\n");
+    // running_thread->state = TERMINATED;
+    // // running_thread->return_value = retval;
+    // // //printf("retval in exit %d\n", *(int*)running_thread->return_value);
+    // for(int i = 0; i < running_thread->wait_count; i++){
+    //     mrthread* t = get_node(&threads, running_thread->waiting_threads[i]);
+    //     t->state = READY;
+    //     //printf("wait to ready done\n");
+    // }
+    // scheduler();
     thread_exit(running_thread->return_value);
-    return 0;
+
+    //printf("*(int*)retval in wrapper after thread exit %d\n", *(int*)running_thread->return_value);
+    return;
 }
 
 void set_context(mrthread* thread){
@@ -218,7 +232,9 @@ int thread_join(int tid, void **retval){
     //printf("before blocktimer\n");
     block_timer();
     if(retval){
+
         *retval = thread_to_join->return_value;
+        //printf("*(int*)retval in join %d\n", *(int*)thread_to_join->return_value);
     }
     unblock_timer();
     return 0;
@@ -229,9 +245,10 @@ void thread_exit(void *retval){
         return;
     }
     block_timer();
+    //printf("return value in exit%d\n", *(int*)retval);
     running_thread->state = TERMINATED;
     running_thread->return_value = retval;
-
+    // //printf("retval in exit %d\n", *(int*)running_thread->return_value);
     for(int i = 0; i < running_thread->wait_count; i++){
         mrthread* t = get_node(&threads, running_thread->waiting_threads[i]);
         t->state = READY;
@@ -250,16 +267,21 @@ int thread_kill(mrthread_t tid, int sign){
     }
     if(running_thread->user_tid == tid){
         raise(sign);
-        block_timer();
+        unblock_timer();
         return 0;
     }
-    mrthread* thread_to_signal = get_node(&threads, tid);
-    if(!thread_to_signal){
-        //printf("node not found\n");
-        unblock_timer();
-        return ESRCH;
+    if(sign == SIGSTOP || sign == SIGCONT || sign == SIGINT){
+        kill(getpid(), sign);
     }
-    sigaddset(&thread_to_signal->signal_set, sign);
+    else{
+        mrthread* thread_to_signal = get_node(&threads, tid);
+        if(!thread_to_signal){
+            //printf("node not found\n");
+            unblock_timer();
+            return ESRCH;
+        }
+        sigaddset(&thread_to_signal->signal_set, sign);
+    }
     //printf("added signal\n");
     unblock_timer();
     return 0;

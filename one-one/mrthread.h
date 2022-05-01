@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<unistd.h>
+#include"lock.h"
 
 typedef pid_t mrthread_t;
 

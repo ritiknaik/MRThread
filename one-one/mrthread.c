@@ -12,24 +12,29 @@
 
 #define CLONE_ALL_FLAGS CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_SYSVSEM|CLONE_PARENT_SETTID|SIGCHLD
 
-
 threadll thread_list;
 int num_thread = 1;
+mrthread_spinlock_t thread_list_lock;
+// mrthread_spinlock_t num_thread_lock;
 
 void cleanup(){
-    // printf("cleanedup\n");
+    //printf("clean up start\n");
     node *tmp;
+    thread_lock(&thread_list_lock);
     tmp = thread_list.start;
     while(tmp->next != NULL){
         node *p = tmp;
         tmp = tmp->next;
         deletell(&thread_list, p->thread->kernel_tid);
+        
         num_thread--;
     }
-    // printf("numthread %d\n", num_thread);
+    thread_unlock(&thread_list_lock);
+    //printf("numthread %d\n", num_thread);
 }
 
 static void init(){
+    //printf("init start\n");
     initll(&thread_list);
     mrthread* thread = (mrthread*)calloc(1, sizeof(mrthread));
     node *p = insertll(&thread_list, thread);
@@ -70,6 +75,9 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     if(tid == NULL || f == NULL){
         return EINVAL;
     }
+    //printf("before createa lock\n");
+    thread_lock(&thread_list_lock);
+    //printf("after create lock\n");
     void* stack = allocate_stack(STACK_SIZE);
     int t;
     static int initial = 0;
@@ -79,6 +87,7 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     }
     mrthread* thread = (mrthread*)calloc(1, sizeof(mrthread));
     if(thread == NULL){
+        thread_unlock(&thread_list_lock);
         return -1;
     }
     thread->user_tid = num_thread;
@@ -86,12 +95,13 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     thread->f = f;
     thread->stack = stack;
     thread->stack_size = STACK_SIZE;
-    //printf("before insertion\n");
+    ////printf("before insertion\n");
     node* insertedNode = insertll(&thread_list, thread);
     //printf("after insertion\n");
     mrthread_t kernel_tid = clone(wrapper, thread->stack + STACK_SIZE, CLONE_ALL_FLAGS, thread, &thread->futex, thread, &thread->futex);
     //printf("tid: %d\n", kernel_tid);
     if(kernel_tid == -1){
+        thread_unlock(&thread_list_lock);
         perror("Clone error");
         free(stack);
         free(thread);
@@ -100,12 +110,14 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     insertedNode->thread->kernel_tid = kernel_tid;
     num_thread++;
     *tid = kernel_tid;
-    //printf("finished thread create\n");
+    thread_unlock(&thread_list_lock);
+    //printf("unlocked create\n");
     return 0;
 }
 
 int thread_join(mrthread_t tid, void **retval){
     //printf("inside join\n");
+    thread_lock(&thread_list_lock);
     node *p = get_node(&thread_list, tid);
     // int found = 0;
     int wstatus;
@@ -114,7 +126,12 @@ int thread_join(mrthread_t tid, void **retval){
 
         // ret = syscall(SYS_futex, &p->thread->futex, FUTEX_WAIT, tid, NULL, NULL, 0);
         //printf("waiting for %d\n", tid);
+        thread_unlock(&thread_list_lock);
+        //printf("before wait\n");
         int w = waitpid(tid, &wstatus, 0);
+        //printf("after wait\n");
+        thread_lock(&thread_list_lock);
+        //printf("after wait lock\n");
         if(w == -1)
             perror("waitpid");
         // if(WIFEXITED(wstatus))
@@ -122,25 +139,31 @@ int thread_join(mrthread_t tid, void **retval){
         // else
         //     printf("child running\n");
     }
-    else
+    else{
+        thread_unlock(&thread_list_lock);
         return ESRCH;
+    }
     // if( == -1 && errno != EAGAIN)
     //     return ret;
 
     if(retval)
         *retval = p->thread->return_value;
     if(deletell(&thread_list, tid)){
-        printf("delete error");
+        //printf("delete error");
     }
     num_thread--;
+    thread_unlock(&thread_list_lock);
+    //printf("unlocked join\n");
     return 0;
 }
 
 void thread_exit(void *retval){
     if(retval == NULL)
         return;
+    thread_lock(&thread_list_lock);
     pid_t cur_pid = getpid();
     node *p = get_node(&thread_list, cur_pid);
+    thread_unlock(&thread_list_lock);
     //int found = 0;
     // while(p){
     //     if(p->thread->kernel_tid == cur_pid){

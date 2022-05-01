@@ -17,6 +17,7 @@
 #define TERMINATED 2
 #define WAITING 3
 #define JOINED 4
+#define STOPPED 5
 
 #define JB_RBP 5
 #define JB_RSP 6
@@ -28,11 +29,11 @@ typedef struct mrthread{
     int user_tid;
     // mrthread_t kernel_tid;
     // int32_t futex;
-    void* stack;
+    void *stack;
     int stack_size;
     void *(*f) (void *);
-    void* arg;
-    void* return_value;
+    void *arg;
+    void *return_value;
     sigset_t signal_set;
     jmp_buf context;
     int state;
@@ -49,7 +50,7 @@ void* allocate_stack(size_t size);
 void init();
 void timer_init();
 void set_context(mrthread* thread);
-int wrapper(void* farg);
+void wrapper(void* farg);
 void raise_pending_signals();
 void scheduler();
 
