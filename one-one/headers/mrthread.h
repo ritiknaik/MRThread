@@ -22,6 +22,9 @@ typedef struct mrthread{
 
 //utility function
 void cleanup();
+static void init();
+int routine_wrapper(void* farg);
+void* allocate_stack(size_t size);
 
 //thread functions
 int thread_create(int* tid, void *(*f) (void *), void *arg);

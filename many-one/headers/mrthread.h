@@ -49,7 +49,7 @@ void* allocate_stack(size_t size);
 void init();
 void timer_init();
 void set_context(mrthread* thread);
-void wrapper(void* farg);
+void routine_wrapper(void* farg);
 void raise_pending_signals();
 void scheduler();
 
