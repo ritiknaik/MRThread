@@ -1,6 +1,6 @@
 #include"../headers/mrthread.h"
 
-
+//function to initialize the spinlock
 int thread_spin_init(mrthread_spinlock_t *lock){
     if(!lock)
         return EINVAL;
@@ -9,6 +9,7 @@ int thread_spin_init(mrthread_spinlock_t *lock){
     // unblock_timer();
 }
 
+//function to acquire the lock of spinlock
 int thread_lock(mrthread_spinlock_t *lock){
     if(!lock)
         return EINVAL;
@@ -16,6 +17,7 @@ int thread_lock(mrthread_spinlock_t *lock){
     return 0;
 }
 
+//function to release the lock of spinlock
 int thread_unlock(mrthread_spinlock_t *lock){
     if(!lock)
         return EINVAL;
@@ -25,6 +27,7 @@ int thread_unlock(mrthread_spinlock_t *lock){
     return 0;
 }
 
+//function to check if the lock is available or not
 int thread_spin_trylock(mrthread_spinlock_t *lock){
     if(!lock)
         return EINVAL;

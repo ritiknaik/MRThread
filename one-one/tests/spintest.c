@@ -7,6 +7,7 @@
 
 //Abhijit Sir's code for Race problems
 long c = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, run = 1;
+
 mrthread_spinlock_t lock;
 void *func1(void *arg) {
 	while(run == 1) {

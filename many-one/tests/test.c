@@ -6,22 +6,26 @@
 #define RESET "\033[0m"
 #define GREEN "\e[0;32m"
 
+//testing file to test all functionality of the library
+int *i, infinite, mask, succ_count, fail_count;
 
 void pattern(void){
     printf("__________________________________\n");
 }
 
-int *i, infinite, mask, succ_count, fail_count;
+//function for test cleared
 void test_cleared(void){
     printf(GREEN "Test Passed\n" RESET);
     succ_count++;
 }
 
+//function for test failed
 void test_failed(void){
     printf(RED "Test Failed\n" RESET);
     fail_count++;
 }
 
+//function to check if test was failed successfully
 void to_fail(int retval){
     if(retval != 0){
         test_cleared();
@@ -31,6 +35,7 @@ void to_fail(int retval){
     }       
 }
 
+//function to check if passed successfully
 void to_pass(int retval){
     if(retval == 0){
         test_cleared();
@@ -41,6 +46,7 @@ void to_pass(int retval){
         
 }
 
+//function to test if return value was 0 or not
 int Test(int retval){
     if(retval != 0)
         //printf("Error value : %s\n", strerror(retval));
@@ -64,7 +70,8 @@ void *func3(){
     return i;
 }
 
-/* Function having infinite loop creating and joining*/
+//function having infinite loop to test signal
+//internally creatng and joining one thread
 void *func4(){
     int r = 30;
     mrthread_t t3;
@@ -80,6 +87,7 @@ void *func5(){
     while(mask);
 }
 
+//signal handler for sigusr1
 void sigusr1_handler(){
 	infinite = 0;
 }
@@ -131,8 +139,6 @@ int main(){
         Test(thread_create(&tid3, func2, NULL));
         void *ret;
         Test(thread_join(tid3, &ret));
-        //printf("Expected return value: 1010\n");
-        //printf("Actual return value: %d\n", *(int*)ret);
         if(*(int*)ret == 1010){
             test_cleared();
         }    
@@ -164,8 +170,6 @@ int main(){
 
         Test(thread_create(&tid, func1, NULL));
         Test(thread_join(tid, &ret));
-        //printf("Expected return value: 1\n");
-        //printf("Actual return value: %d\n", *(int*)ret);
         if(*(int*)ret == 1){
             test_cleared();
         }   
@@ -180,8 +184,6 @@ int main(){
 
         Test(thread_create(&tid, func2, NULL));
         Test(thread_join(tid, &ret));
-        //printf("Expected Exit Status is %d\n", 1010);
-        //printf("Actual   Exit Status is %d\n", *(int*) ret);
         if(*(int*)ret == 1010){
             test_cleared();
         }

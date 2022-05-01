@@ -8,16 +8,15 @@
 //Abhijit Sir's code for Race problems
 long c = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0, c5 = 0, run = 1;
 mrthread_spinlock_t lock;
+
 void *func1(void *arg){
 	while(run == 1){
-		printf("in func1\n");
-		// printf("before lock func1\n");
+		// printf("in func1\n");
 		thread_lock(&lock);
-		printf("after lock func1\n");
+		// printf("after lock func1\n");
         c++;
-		// printf("before unlock func1\n");
 		thread_unlock(&lock);
-		printf("after unlock func1\n");
+		// printf("after unlock func1\n");
 		c1++;
     }
     return NULL;
@@ -25,12 +24,12 @@ void *func1(void *arg){
 
 void *func2(void *arg){
 	while(run == 1){
-		printf("in func2\n");
+		// printf("in func2\n");
         thread_lock(&lock);
-		printf("after lock func2\n");
+		// printf("after lock func2\n");
         c++;
 		thread_unlock(&lock);
-		printf("after unlock func2\n");
+		// printf("after unlock func2\n");
 		c2++;
     }
     return NULL;
@@ -38,12 +37,12 @@ void *func2(void *arg){
 
 void *func3(void *arg){
 	while(run == 1) {
-		printf("in func3\n");
+		// printf("in func3\n");
         thread_lock(&lock);
-		printf("after lock func3\n");
+		// printf("after lock func3\n");
         c++;
 		thread_unlock(&lock);
-		printf("after unlock func3\n");
+		// printf("after unlock func3\n");
 		c3++;
     }
     return NULL;
@@ -51,12 +50,12 @@ void *func3(void *arg){
 
 void *func4(void *arg){
 	while(run == 1){
-		printf("in func4\n");
+		// printf("in func4\n");
         thread_lock(&lock);
-		printf("after lock func4\n");
+		// printf("after lock func4\n");
         c++;
 		thread_unlock(&lock);
-		printf("after unlock func4\n");
+		// printf("after unlock func4\n");
 		c4++;
     }
     return NULL;
@@ -64,12 +63,12 @@ void *func4(void *arg){
 
 void *func5(void *arg){
 	while(run == 1){
-		printf("in func5\n");
+		// printf("in func5\n");
         thread_lock(&lock);
-		printf("after lock func5\n");
+		// printf("after lock func5\n");
         c++;
 		thread_unlock(&lock);
-		printf("after unlock func5\n");
+		// printf("after unlock func5\n");
 		c5++;
     }
     return NULL;

@@ -15,8 +15,8 @@
 threadll thread_list;
 int num_thread = 1;
 mrthread_spinlock_t thread_list_lock;
-// mrthread_spinlock_t num_thread_lock;
 
+//cleans up the stacks and memroy
 void cleanup(){
     //printf("clean up start\n");
     node *tmp;
@@ -33,6 +33,7 @@ void cleanup(){
     //printf("numthread %d\n", num_thread);
 }
 
+//init function
 static void init(){
     //printf("init start\n");
     initll(&thread_list);
@@ -43,7 +44,7 @@ static void init(){
     return;
 }
 
-//allocatea stack of the thread
+//allocate stack for the thread
 void* allocate_stack(size_t size){
     void* stack = NULL;
     stack = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
@@ -55,13 +56,13 @@ void* allocate_stack(size_t size){
 }
 
 //wrapper to pass the clone system call
-int wrapper(void* farg){
+int routine_wrapper(void* farg){
     mrthread *temp;
     // FILE* fp;
     // fp=fopen("output.txt", "w+");
 
     //printf("inside wrapper\n");
-    fflush(stdout);
+    // fflush(stdout);
     temp = (mrthread*)farg;
     // fclose(fp);
     temp->return_value = temp->f(temp->arg);
@@ -69,7 +70,7 @@ int wrapper(void* farg){
     return 0;
 }
 
-//create a thread
+//function to create a one-one thread using clone()
 int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     //printf("inside thread_create\n");
     if(tid == NULL || f == NULL){
@@ -81,6 +82,7 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     void* stack = allocate_stack(STACK_SIZE);
     int t;
     static int initial = 0;
+    //checking if this is the first thread
     if(initial == 0){
         initial = 1;
         init(&thread_list);
@@ -96,9 +98,9 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     thread->stack = stack;
     thread->stack_size = STACK_SIZE;
     ////printf("before insertion\n");
-    node* insertedNode = insertll(&thread_list, thread);
+    node* inserted_node = insertll(&thread_list, thread);
     //printf("after insertion\n");
-    mrthread_t kernel_tid = clone(wrapper, thread->stack + STACK_SIZE, CLONE_ALL_FLAGS, thread, &thread->futex, thread, &thread->futex);
+    mrthread_t kernel_tid = clone(routine_wrapper, thread->stack + STACK_SIZE, CLONE_ALL_FLAGS, thread, &thread->futex, thread, &thread->futex);
     //printf("tid: %d\n", kernel_tid);
     if(kernel_tid == -1){
         thread_unlock(&thread_list_lock);
@@ -107,7 +109,7 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
         free(thread);
         return -1;
     }
-    insertedNode->thread->kernel_tid = kernel_tid;
+    inserted_node->thread->kernel_tid = kernel_tid;
     num_thread++;
     *tid = kernel_tid;
     thread_unlock(&thread_list_lock);
@@ -115,6 +117,7 @@ int thread_create(mrthread_t* tid, void *(*f) (void *), void *arg){
     return 0;
 }
 
+//function to join a thread
 int thread_join(mrthread_t tid, void **retval){
     //printf("inside join\n");
     thread_lock(&thread_list_lock);
@@ -157,6 +160,7 @@ int thread_join(mrthread_t tid, void **retval){
     return 0;
 }
 
+//function for thread exit
 void thread_exit(void *retval){
     if(retval == NULL)
         return;
@@ -174,6 +178,7 @@ void thread_exit(void *retval){
     return;
 }
 
+//function to send signals to other threads
 int thread_kill(mrthread_t tid, int sig){
     if(sig < 0 || sig > 64)
         return EINVAL;

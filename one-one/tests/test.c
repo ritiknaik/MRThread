@@ -6,22 +6,26 @@
 #define RESET "\033[0m"
 #define GREEN "\e[0;32m"
 
+//testing file to test all functionality of the library
+int *i, infinite, mask, succ_count, fail_count;
 
 void pattern(void){
     printf("__________________________________\n");
 }
 
-int *i, infinite, mask, succ_count, fail_count;
+//function for test cleared
 void test_cleared(void){
     printf(GREEN "Test Passed\n" RESET);
     succ_count++;
 }
 
+//function for test failed
 void test_failed(void){
     printf(RED "Test Failed\n" RESET);
     fail_count++;
 }
 
+//function to check if test was failed successfully
 void to_fail(int retval){
     if(retval != 0){
         test_cleared();
@@ -31,6 +35,7 @@ void to_fail(int retval){
     }       
 }
 
+//function to check if passed successfully
 void to_pass(int retval){
     if(retval == 0){
         test_cleared();
@@ -41,6 +46,7 @@ void to_pass(int retval){
         
 }
 
+//function to test if return value was 0 or not
 int Test(int retval){
     if(retval != 0)
         printf("Error value : %s\n", strerror(retval));
@@ -64,7 +70,8 @@ void *func3(){
     return i;
 }
 
-/* Function having infinite loop creating and joining*/
+//function having infinite loop to test signal
+//internally creatng and joining one thread
 void *func4(){
     int r = 30;
     mrthread_t t3;
@@ -80,6 +87,7 @@ void *func5(){
     while(mask);
 }
 
+//signal handler for sigusr1
 void sigusr1_handler(){
 	infinite = 0;
 }
@@ -88,17 +96,20 @@ int main(){
     pattern();
     printf("1] Thread Create Testing\n");
     pattern();
+    
     /* Testing with start routine NULL */
     {
         mrthread_t t1;
         to_fail(thread_create( &t1, NULL , NULL));
     }
+
     /* Testing with invalid arguments */
     {
         mrthread_t t1;
         to_fail(thread_create(NULL, NULL, NULL));
         to_fail(thread_create(NULL, func1, NULL));
     }
+
     /* Testing with default attributes */
     {
         mrthread_t tid;
@@ -109,6 +120,7 @@ int main(){
     pattern();
     printf("2] Thread Join Testing\n");
     pattern();
+
     /* Testing with invalid TID */
     {
         mrthread_t tid1;
@@ -125,6 +137,7 @@ int main(){
         Test(thread_join(tid2, NULL));
         to_fail(thread_join(tid2, NULL));
     }
+
     /* Testing and retrieving return value */
     {
         mrthread_t tid3;
@@ -138,9 +151,9 @@ int main(){
         }    
         else{
             test_failed();
-        }
-            
+        }  
     }
+
     /* Testing multiple creates and joins */
     {
         mrthread_t tid[5];
@@ -157,6 +170,7 @@ int main(){
     pattern();
     printf("2] Thread Exit Testing\n");
     pattern();
+
     /* Testing Created Thread Uses Return To Exit */
     {
         void *ret;
@@ -173,7 +187,8 @@ int main(){
             test_failed();
         }
     }
-    /* Test 2 --> Created Thread Uses mthread_exit() */
+
+    /* Test 2 --> Created Thread Uses mrthread_exit() */
     {
         void *ret;
         mrthread_t tid;
@@ -193,6 +208,7 @@ int main(){
     pattern();
     printf("3] Thread Kill Testing\n");
     pattern();
+
     /* Testing with invalid signal */
     {
         mrthread_t tid;
@@ -236,10 +252,10 @@ int main(){
         if(ret == 0){
             test_cleared();
         }
-        else{ 
+        else{
             test_failed();
         }
-        Test(thread_join(tid, NULL));  
+        Test(thread_join(tid, NULL));
     }
 
     printf(GREEN "\nSUCCESS COUNT = %d\n" RESET,succ_count);

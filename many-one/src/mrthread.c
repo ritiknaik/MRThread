@@ -1,10 +1,11 @@
 #include "../headers/mrthread.h"
 
-jmp_buf env;
+// jmp_buf env;
 mrthread* running_thread;
 thread_queue threads;
 int num_thread = 0;
 
+//function to block timer interrupt from SIGVTALRM
 void block_timer(){
     sigset_t set;
     sigemptyset(&set);
@@ -12,6 +13,7 @@ void block_timer(){
     sigprocmask(SIG_BLOCK, &set, NULL);
 }
 
+//function to unblock timer interrupt from SIGVTALRM
 void unblock_timer(){
     sigset_t set;
     sigemptyset(&set);
@@ -19,6 +21,7 @@ void unblock_timer(){
     sigprocmask(SIG_UNBLOCK, &set, NULL);
 }
 
+//function to allocate stack to the thread
 void* allocate_stack(size_t size){
     void* stack = NULL;
     stack = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
@@ -29,6 +32,7 @@ void* allocate_stack(size_t size){
     return stack;
 }
 
+//function to initialize the library and timer
 void init(){
     init_q(&threads);
 
@@ -41,12 +45,12 @@ void init(){
     main->arg = NULL;
     main->return_value = NULL;
     main->f = NULL;
+    main->waiting_threads = NULL;
     main->user_tid = num_thread;
     main->state = RUNNING;
-    main->waiting_threads = NULL;
     main->wait_count = 0;
     main->stack_size = STACK_SIZE;
-    ///////////////////
+    
     sigemptyset(&(main->signal_set));
     running_thread = main;
     num_thread++;
@@ -54,6 +58,7 @@ void init(){
     //printf("done init\n");
 }
 
+//function to set and initialize timer
 void timer_init(){
     sigset_t mask;
     sigfillset(&mask);
@@ -75,6 +80,8 @@ void timer_init(){
     //printf("setted timer\n");
 }
 
+//raise the signals that the thread recieved
+//while it was in the queue and not running
 void raise_pending_signals(){
     sigset_t to_raise;
     sigfillset(&to_raise);
@@ -92,11 +99,14 @@ void raise_pending_signals(){
     return;
 }
 
+//SIGVTALRM handler
 void alarm_handle(){
    //printf("alarm\n");
     scheduler();
 }
 
+//function to schedule threads when timer interrupt
+//occurs or the thread exits
 void scheduler(){
    //printf("scheduler called\n");
     // block_timer();
@@ -130,7 +140,8 @@ void scheduler(){
     }
 }
 
-void wrapper(void* farg){
+//wrapper over the function call
+void routine_wrapper(void* farg){
    //printf("wrapper called\n");
     unblock_timer();
     
@@ -138,28 +149,22 @@ void wrapper(void* farg){
     //printf("*(int*)retval in wrapper %d\n", *(int*)running_thread->return_value);
     //printf("retval in wrapper%d\n", running_thread->return_value);
     //printf("before exit\n");
-    // running_thread->state = TERMINATED;
-    // // running_thread->return_value = retval;
-    // // //printf("retval in exit %d\n", *(int*)running_thread->return_value);
-    // for(int i = 0; i < running_thread->wait_count; i++){
-    //     mrthread* t = get_node(&threads, running_thread->waiting_threads[i]);
-    //     t->state = READY;
-    //     //printf("wait to ready done\n");
-    // }
-    // scheduler();
     thread_exit(running_thread->return_value);
 
     //printf("*(int*)retval in wrapper after thread exit %d\n", *(int*)running_thread->return_value);
     return;
 }
 
+//function to set the context of jmpbuf
+//RSP stack pointer, RBP base pointer, PC instruction pointer
 void set_context(mrthread* thread){
     setjmp(thread->context);
     thread->context[0].__jmpbuf[JB_RSP] = mangle((long int) thread->stack + STACK_SIZE - sizeof(long int));
     thread->context[0].__jmpbuf[JB_RBP] = thread->context[0].__jmpbuf[JB_RSP];
-	thread->context[0].__jmpbuf[JB_PC] = mangle((long int) wrapper);
+	thread->context[0].__jmpbuf[JB_PC] = mangle((long int) routine_wrapper);
 }
 
+//function to create thread in many-one fashion
 int thread_create(int* tid, void *(*f) (void *), void *arg){
    //printf("create thread called\n");
     block_timer();
@@ -184,10 +189,10 @@ int thread_create(int* tid, void *(*f) (void *), void *arg){
     }
     thread->arg = arg;
     thread->f = f;
+    thread->wait_count = 0;
     thread->state = READY;
     thread->waiting_threads = NULL;
     thread->user_tid = num_thread;
-    thread->wait_count = 0;
     thread->return_value = NULL;
     sigemptyset(&(thread->signal_set));
 
@@ -201,6 +206,7 @@ int thread_create(int* tid, void *(*f) (void *), void *arg){
     return 0;
 }
 
+//function to join a thread in many-one fashion
 int thread_join(int tid, void **retval){
     block_timer();
     if(tid == running_thread->user_tid){
@@ -237,7 +243,6 @@ int thread_join(int tid, void **retval){
    //printf("before blocktimer\n");
     block_timer();
     if(retval){
-
         *retval = thread_to_join->return_value;
        //printf("*(int*)retval in join %d\n", *(int*)thread_to_join->return_value);
     }
@@ -245,6 +250,7 @@ int thread_join(int tid, void **retval){
     return 0;
 }
 
+//function for thread exit in many-one fashion
 void thread_exit(void *retval){
     if(retval == NULL){
         return;
@@ -264,6 +270,7 @@ void thread_exit(void *retval){
     scheduler();
 }
 
+//function for thread kill in many-one fashion
 int thread_kill(mrthread_t tid, int sign){
     block_timer();
     if(sign < 0 || sign > 64){

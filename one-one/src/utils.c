@@ -1,8 +1,6 @@
 #include "../headers/mrthread.h"
-#include <errno.h>
-#include <sys/mman.h>
 
-//initialize global linked list
+//function to initialize global linked list
 int initll(threadll* ll){
     if (!ll)
         return -1;
@@ -10,7 +8,7 @@ int initll(threadll* ll){
     return 0;
 }
 
-//insert to global linked list
+//functio to insert to global linked list
 node* insertll(threadll* ll, mrthread* t){
     node* temp;
     temp = (node*)malloc(sizeof(node));
@@ -30,6 +28,7 @@ node* insertll(threadll* ll, mrthread* t){
     return temp;
 }
 
+//function to delete a thread from linked list
 int deletell(threadll* ll, mrthread_t tid){
     //printf("inside deletell\n");
     node* tmp = ll->start;
@@ -75,6 +74,7 @@ int deletell(threadll* ll, mrthread_t tid){
     return 0;
 }
 
+// function to find the node from given tid
 node* get_node(threadll* ll, mrthread_t tid){
     node* p = ll->start;
     while(p){
