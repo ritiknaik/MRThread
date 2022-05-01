@@ -1,20 +1,17 @@
-#include "mrthread.h"
+#include "../headers/mrthread.h"
 #include <stdio.h>
 
 
 #define GREEN "\033[0;32;32m"
 #define RED "\033[0;31;31m"
 #define RESET "\033[m"
-
-//creation of 4 threads for searching a number
-
 #define MAX 16
 
 int keys[] = { 1, 12, 45, 55, 65, 71, 77, 89, 91, 123, 135, 140, 146, 155, 169, 221 };
 
-int key = 140;
+int key = 169;
 int is_present = 0;
-mrthread_spinlock_t lock;
+// mrthread_spinlock_t lock;
 struct arg_struct {
     int begin;
     int end;
@@ -28,9 +25,9 @@ void* binary_search(void* arg){
     while (begin < end && !is_present) { 
         mid = (end - begin) / 2 + begin;
         if (keys[mid] == key) {
-            thread_lock (&lock);
+            // thread_lock (&lock);
             is_present = 1;
-            thread_unlock(&lock);
+            // thread_unlock(&lock);
           break;
         }
         else if (keys[mid] > key)
@@ -41,12 +38,12 @@ void* binary_search(void* arg){
 }
 int main() {
     mrthread_t threads[4];
-    struct arg_struct argument;
     for (int i = 0; i < 4; i++){
-        thread_lock(&lock);
+        // thread_lock(&lock);
+        struct arg_struct argument;
         argument.begin = i * (MAX / 4);
         argument.end = (i+1) * (MAX / 4);
-        thread_unlock(&lock);
+        // thread_unlock(&lock);
         thread_create(&threads[i],binary_search, (void *)&argument);
     } 
     for (int i = 0; i < 4; i++)

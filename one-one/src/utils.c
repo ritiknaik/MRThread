@@ -1,6 +1,6 @@
-#include"mrthread.h"
-#include<errno.h>
-#include<sys/mman.h>
+#include "../headers/mrthread.h"
+#include <errno.h>
+#include <sys/mman.h>
 
 //initialize global linked list
 int initll(threadll* ll){

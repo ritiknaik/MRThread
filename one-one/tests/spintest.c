@@ -1,6 +1,6 @@
 
 #include <stdio.h>
-#include "mrthread.h"
+#include "../headers/mrthread.h"
 #define GREEN "\033[0;32;32m"
 #define RED "\033[0;31;31m"
 #define RESET "\033[m"
@@ -85,7 +85,12 @@ int main() {
 	else {
 		printf(RED "Race test with 5 threads failed\n" RESET);
 	}
-
-    printf("\n%ld %ld %ld %ld %ld %ld %ld\n", c, c1 + c2 + c3 + c4 + c5 , c1, c2, c3, c4, c5);
+    printf("c = %ld\n", c);
+    printf("c1+c2+c3+c4+c5 = %ld\n", c1 + c2 + c3 + c4 + c5);
+    printf("c1 = %ld\n", c1);
+    printf("c2 = %ld\n", c2);
+    printf("c3 = %ld\n", c3);
+    printf("c4 = %ld\n", c4);
+    printf("c5 = %ld\n", c5);
     return 0;
 }

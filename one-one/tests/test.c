@@ -1,4 +1,4 @@
-#include "mrthread.h"
+#include "../headers/mrthread.h"
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
@@ -6,39 +6,44 @@
 #define RESET "\033[0m"
 #define GREEN "\e[0;32m"
 
-int *s;
+
 void pattern(void){
     printf("__________________________________\n");
 }
 
 int *i, infinite, mask, succ_count, fail_count;
+void test_cleared(void){
+    printf(GREEN "Test Passed\n" RESET);
+    succ_count++;
+}
+
+void test_failed(void){
+    printf(RED "Test Failed\n" RESET);
+    fail_count++;
+}
+
 void to_fail(int retval){
     if(retval != 0){
-        printf(GREEN "Test Passed\n" RESET);
-        succ_count++;
+        test_cleared();
     }
     else{
-        printf(RED "Test Failed\n" RESET);
-        fail_count++;
-    }
-        
+        test_failed();
+    }       
 }
 
 void to_pass(int retval){
     if(retval == 0){
-        printf(GREEN "Test Passed\n" RESET);
-        succ_count++;
+        test_cleared();
     }    
     else{
-        printf(RED "Test Failed\n" RESET);
-        fail_count++;
+        test_failed();
     }
         
 }
 
 int Test(int retval){
     if(retval != 0)
-        // printf("Error value : %s\n", strerror(retval));
+        printf("Error value : %s\n", strerror(retval));
     return retval;
 }
 
@@ -66,8 +71,8 @@ void *func4(){
     while(infinite);
     thread_create(&t3, func3, NULL);
     thread_join(t3, NULL);
-    s = &r;
-    return s;
+    int *p = &r;
+    return p;
 }
 
 void *func5(){
@@ -76,7 +81,6 @@ void *func5(){
 }
 
 void sigusr1_handler(){
-    //printf("inside handler\n");
 	infinite = 0;
 }
 
@@ -100,8 +104,7 @@ int main(){
         mrthread_t tid;
         Test(thread_create(&tid, func1, NULL));
         Test(thread_join(tid, NULL));
-        printf(GREEN "Test Passed\n" RESET);
-        succ_count++;
+        test_cleared();
     }
     pattern();
     printf("2] Thread Join Testing\n");
@@ -131,12 +134,10 @@ int main(){
         //printf("Expected return value: 1010\n");
         //printf("Actual return value: %d\n", *(int*)ret);
         if(*(int*)ret == 1010){
-            printf(GREEN "Test Passed\n" RESET);
-            succ_count++;
+            test_cleared();
         }    
         else{
-            printf(RED "Test Failed\n" RESET);
-            fail_count++;
+            test_failed();
         }
             
     }
@@ -150,12 +151,11 @@ int main(){
         for(int i = 0; i < 5; i++) {
             Test(thread_join(tid[i], NULL));
         }
-        printf(GREEN "Test Passed\n" RESET);
-        succ_count++;
+        test_cleared();
     }
 
     pattern();
-    printf("3] Thread Exit Testing\n");
+    printf("2] Thread Exit Testing\n");
     pattern();
     /* Testing Created Thread Uses Return To Exit */
     {
@@ -167,12 +167,10 @@ int main(){
         //printf("Expected return value: 1\n");
         //printf("Actual return value: %d\n", *(int*)ret);
         if(*(int*)ret == 1){
-            printf(GREEN "Test Passed\n" RESET);
-            succ_count++;
+            test_cleared();
         }   
         else{
-            printf(RED "Test Failed\n" RESET);
-            fail_count++;
+            test_failed();
         }
     }
     /* Test 2 --> Created Thread Uses mthread_exit() */
@@ -185,17 +183,15 @@ int main(){
         //printf("Expected Exit Status is %d\n", 1010);
         //printf("Actual   Exit Status is %d\n", *(int*) ret);
         if(*(int*)ret == 1010){
-            printf(GREEN "Test Passed\n" RESET);
-            succ_count++;
+            test_cleared();
         }
         else{
-            printf(RED "Test Failed\n" RESET);
-            fail_count++;
+            test_failed();
         }
     }
 
     pattern();
-    printf("4] Thread Kill Testing\n");
+    printf("3] Thread Kill Testing\n");
     pattern();
     /* Testing with invalid signal */
     {
@@ -208,8 +204,7 @@ int main(){
         to_fail(thread_kill(tid, -1));
         infinite = 0;
         Test(thread_join(tid, NULL));
-        printf(GREEN "Test Passed\n" RESET);
-        succ_count++;
+        test_cleared();
     }
 
     /* Testing of sending signal to a thread */
@@ -223,36 +218,32 @@ int main(){
         Test(thread_create(&tid, func4, NULL));
         Test(thread_kill(tid, SIGUSR1));
         Test(thread_join(tid, &ret));
-        //printf("retval in test%d\n", *(int*)ret);
         if(*(int*)ret == 30){
-            printf(GREEN "Test Passed\n" RESET);
-            succ_count++;
+            test_cleared();
         }
         else{ 
-            printf(RED "Test Failed\n" RESET);
-            fail_count++;
+            test_failed();
         }
     }
 
     /* Testing signals SIGTSTP SIGCONT SIGKILL */
-    // {
-    //     mrthread_t tid;
-    //     Test(thread_create(&tid, func5, NULL));
-    //     Test(thread_kill(tid, SIGTSTP));
-    //     Test(thread_kill(tid, SIGCONT));
-    //     int ret = Test(thread_kill(tid, SIGKILL));
-    //     if(ret == 0){
-    //         printf(GREEN "Test Passed\n" RESET);
-    //         succ_count++;
-    //     }
-    //     else{ 
-    //         printf(RED "Test Failed\n" RESET);
-    //         fail_count++;
-    //     }
-    //     Test(thread_join(tid, NULL));  
-    // }
+    {
+        mrthread_t tid;
+        Test(thread_create(&tid, func5, NULL));
+        Test(thread_kill(tid, SIGTSTP));
+        Test(thread_kill(tid, SIGCONT));
+        int ret = Test(thread_kill(tid, SIGKILL));
+        if(ret == 0){
+            test_cleared();
+        }
+        else{ 
+            test_failed();
+        }
+        Test(thread_join(tid, NULL));  
+    }
 
     printf(GREEN "\nSUCCESS COUNT = %d\n" RESET,succ_count);
-    printf(RED "FAILURE COUNT = %d\n" RESET, fail_count);
+    if(fail_count>0)
+        printf(RED "FAILURE COUNT = %d\n" RESET, fail_count);
     return 0;
 }

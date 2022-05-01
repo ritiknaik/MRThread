@@ -1,14 +1,14 @@
-#include"mrthread.h"
-#include<sys/mman.h>
-#include<errno.h>
+#include "../headers/mrthread.h"
+#include <sys/mman.h>
+#include <errno.h>
 #include <linux/futex.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include<signal.h>
-#include<sched.h>
-#include<sys/resource.h>
+#include <signal.h>
+#include <sched.h>
+#include <sys/resource.h>
 
 #define CLONE_ALL_FLAGS CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_SYSVSEM|CLONE_PARENT_SETTID|SIGCHLD
 
@@ -164,14 +164,6 @@ void thread_exit(void *retval){
     pid_t cur_pid = getpid();
     node *p = get_node(&thread_list, cur_pid);
     thread_unlock(&thread_list_lock);
-    //int found = 0;
-    // while(p){
-    //     if(p->thread->kernel_tid == cur_pid){
-    //         found = 1;
-    //         break;
-    //     }
-    //     p = p->next;
-    // }
     if(p){
         p->thread->return_value = retval;
         kill(cur_pid, SIGKILL);  

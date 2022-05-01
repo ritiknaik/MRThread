@@ -9,6 +9,7 @@
 #include<string.h>
 #include<sys/mman.h>
 #include<sys/time.h>
+#include"lock.h"
 
 #define STACK_SIZE 65536
 

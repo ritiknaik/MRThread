@@ -1,4 +1,4 @@
-#include "mrthread.h"
+#include "../headers/mrthread.h"
 
 int init_q(thread_queue *q){
     q->start = NULL;
@@ -73,22 +73,31 @@ int is_empty_q(thread_queue *q){
 // }
 
 mrthread* thread_to_sched(thread_queue* q){
+    // mrthread* p;
+    // p = dequeue_q(q);
+    // if(!p){
+    //     return NULL;
+    // }
+    // if(p->state == READY){
+    //     return p;
+    // }
+    // else{
+    //     for(int i = 0; i < q->num; i++){
+    //         enqueue_q(q, p);
+    //         p = dequeue_q(q);
+    //         if(p->state == READY){
+    //             return p;
+    //         }
+    //     }
+    // }
+    // return NULL;
     mrthread* p;
-    p = dequeue_q(q);
-    if(!p){
-        return NULL;
-    }
-    if(p->state == READY){
-        return p;
-    }
-    else{
-        for(int i = 0; i < q->num; i++){
-            enqueue_q(q, p);
-            p = dequeue_q(q);
-            if(p->state == READY){
-                return p;
-            }
+    for(int i = 0; i < (q->num); i++){
+        p = dequeue_q(q);
+        if(p->state == READY){
+            return p;
         }
+        enqueue_q(q, p);
     }
     return NULL;
 }

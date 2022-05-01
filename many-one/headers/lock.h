@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <stdatomic.h>
@@ -12,6 +13,3 @@ int thread_lock(mrthread_spinlock_t *lock);
 int thread_unlock(mrthread_spinlock_t *lock);
 int thread_spin_trylock(mrthread_spinlock_t *lock);
 
-int thread_mutex_init(mrthread_mutex_t *mutex);
-int thread_mutex_lock(mrthread_mutex_t *mutex);
-int thread_mutex_unlock(mrthread_mutex_t *mutex);

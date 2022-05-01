@@ -1,4 +1,4 @@
-#include "mrthread.h"
+#include "../headers/mrthread.h"
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
@@ -43,7 +43,7 @@ void to_pass(int retval){
 
 int Test(int retval){
     if(retval != 0)
-        printf("Error value : %s\n", strerror(retval));
+        //printf("Error value : %s\n", strerror(retval));
     return retval;
 }
 
@@ -71,8 +71,8 @@ void *func4(){
     while(infinite);
     thread_create(&t3, func3, NULL);
     thread_join(t3, NULL);
-    int *p = &r;
-    return p;
+    int *i = &r;
+    return i;
 }
 
 void *func5(){
@@ -155,7 +155,7 @@ int main(){
     }
 
     pattern();
-    printf("2] Thread Exit Testing\n");
+    printf("3] Thread Exit Testing\n");
     pattern();
     /* Testing Created Thread Uses Return To Exit */
     {
@@ -191,7 +191,7 @@ int main(){
     }
 
     pattern();
-    printf("3] Thread Kill Testing\n");
+    printf("4] Thread Kill Testing\n");
     pattern();
     /* Testing with invalid signal */
     {
@@ -218,6 +218,7 @@ int main(){
         Test(thread_create(&tid, func4, NULL));
         Test(thread_kill(tid, SIGUSR1));
         Test(thread_join(tid, &ret));
+        test_cleared();
         if(*(int*)ret == 30){
             test_cleared();
         }
