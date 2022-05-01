@@ -55,7 +55,6 @@ void init(){
     running_thread = main;
     num_thread++;
     timer_init();
-    //printf("done init\n");
 }
 
 //function to set and initialize timer
@@ -77,7 +76,6 @@ void timer_init(){
     clock.it_value.tv_usec = 100;
     //start timer
 	setitimer(ITIMER_VIRTUAL, &clock, 0);
-    //printf("setted timer\n");
 }
 
 //raise the signals that the thread recieved
@@ -90,9 +88,7 @@ void raise_pending_signals(){
     sigprocmask(SIG_UNBLOCK, &to_raise, NULL);
     for(int j = 0; j < NSIG; j++){
         if(sigismember(&(running_thread->signal_set), j)){
-            //printf("raised signal %d\n", j);
             raise(j);
-            //printf("came back\n");
             sigdelset(&(running_thread->signal_set), j);
         }
     }
@@ -101,57 +97,38 @@ void raise_pending_signals(){
 
 //SIGVTALRM handler
 void alarm_handle(){
-   //printf("alarm\n");
     scheduler();
 }
 
 //function to schedule threads when timer interrupt
 //occurs or the thread exits
 void scheduler(){
-   //printf("scheduler called\n");
-    // block_timer();
-    // int a;
     if(setjmp(running_thread->context) == 0){
         block_timer();
         if(running_thread->state != TERMINATED){
             running_thread->state = READY;
         }
-        //printf("before enqueue\n");
         enqueue_q(&threads, running_thread);
-        //printf("before thread to sched\n");
         running_thread = thread_to_sched(&threads);
         if(!running_thread){
             exit(0);
         }
         running_thread->state = RUNNING;
-        //printf("before longjmp\n");
-       //printf("tid of new: %d\n", running_thread->user_tid);
-        //printf("jmpbuf: %s\n", running_thread->context);
         longjmp(running_thread->context, 1);
     }
     else{
-        // unblock_timer();
-       //printf("after longjump %d\n", running_thread->user_tid);
         raise_pending_signals();
-       //printf("after raising signals\n");
         unblock_timer();
-       //printf("after unblocking\n");
         return;
     }
 }
 
 //wrapper over the function call
 void routine_wrapper(void* farg){
-   //printf("wrapper called\n");
     unblock_timer();
     
     running_thread->return_value = running_thread->f(running_thread->arg);
-    //printf("*(int*)retval in wrapper %d\n", *(int*)running_thread->return_value);
-    //printf("retval in wrapper%d\n", running_thread->return_value);
-    //printf("before exit\n");
     thread_exit(running_thread->return_value);
-
-    //printf("*(int*)retval in wrapper after thread exit %d\n", *(int*)running_thread->return_value);
     return;
 }
 
@@ -166,7 +143,6 @@ void set_context(mrthread* thread){
 
 //function to create thread in many-one fashion
 int thread_create(int* tid, void *(*f) (void *), void *arg){
-   //printf("create thread called\n");
     block_timer();
     if(tid == NULL || f == NULL){
         unblock_timer();
@@ -197,12 +173,10 @@ int thread_create(int* tid, void *(*f) (void *), void *arg){
     sigemptyset(&(thread->signal_set));
 
     set_context(thread);
-    //printf("create jmpbuf: %s, tid: %d\n", thread->context, thread->user_tid);
     *tid = thread->user_tid;
     enqueue_q(&threads, thread);
     num_thread++;
     unblock_timer();
-   //printf("crete done\n");
     return 0;
 }
 
@@ -212,13 +186,10 @@ int thread_join(int tid, void **retval){
     if(tid == running_thread->user_tid){
         return EDEADLK;
     }
-   //printf("entered join\n");
     mrthread* thread_to_join = get_node(&threads, tid);
     if(!thread_to_join){
-       //printf("node not ofund\n");
         return ESRCH;
     }
-   //printf("before deadlock\n");
     for(int i = 0; i < thread_to_join->wait_count; i++){
         if(thread_to_join->waiting_threads[i] == tid){
             perror("Deadlock");
@@ -227,24 +198,16 @@ int thread_join(int tid, void **retval){
     }
     if(thread_to_join->state == TERMINATED){
         unblock_timer();
-       //printf("terminated before joining\n");
         return ESRCH;
     }
-   //printf("before assigning\n");
     thread_to_join->waiting_threads = (int*)realloc(thread_to_join->waiting_threads, (++(thread_to_join->wait_count)) * sizeof(int));
-   //printf("after realloc\n");
     thread_to_join->waiting_threads[thread_to_join->wait_count - 1] = running_thread->user_tid;
-   //printf("after wait\n");
     running_thread->state = WAITING;
-   //printf("after waiting\n");
     unblock_timer();
-   //printf("before loop\n");
     while(thread_to_join->state != TERMINATED);
-   //printf("before blocktimer\n");
     block_timer();
     if(retval){
         *retval = thread_to_join->return_value;
-       //printf("*(int*)retval in join %d\n", *(int*)thread_to_join->return_value);
     }
     unblock_timer();
     return 0;
@@ -256,17 +219,13 @@ void thread_exit(void *retval){
         return;
     }
     block_timer();
-    //printf("return value in exit%d\n", *(int*)retval);
     running_thread->state = TERMINATED;
     running_thread->return_value = retval;
-    // //printf("retval in exit %d\n", *(int*)running_thread->return_value);
     for(int i = 0; i < running_thread->wait_count; i++){
         mrthread* t = get_node(&threads, running_thread->waiting_threads[i]);
         t->state = READY;
-        //printf("wait to ready done\n");
     }
     unblock_timer();
-    //printf("after exit\n");
     scheduler();
 }
 
@@ -288,13 +247,11 @@ int thread_kill(mrthread_t tid, int sign){
     else{
         mrthread* thread_to_signal = get_node(&threads, tid);
         if(!thread_to_signal){
-            //printf("node not found\n");
             unblock_timer();
             return ESRCH;
         }
         sigaddset(&thread_to_signal->signal_set, sign);
     }
-    //printf("added signal\n");
     unblock_timer();
     return 0;
 }

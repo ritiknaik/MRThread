@@ -49,7 +49,7 @@ void to_pass(int retval){
 //function to test if return value was 0 or not
 int Test(int retval){
     if(retval != 0)
-        //printf("Error value : %s\n", strerror(retval));
+        //printf("Error encountered : %s\n", strerror(retval));
     return retval;
 }
 

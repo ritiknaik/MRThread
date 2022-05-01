@@ -4,9 +4,7 @@
 int thread_spin_init(mrthread_spinlock_t *lock){
     if(!lock)
         return EINVAL;
-    // block_timer();
     *lock = 0;
-    // unblock_timer();
 }
 
 //function to acquire the lock of spinlock
@@ -21,9 +19,7 @@ int thread_lock(mrthread_spinlock_t *lock){
 int thread_unlock(mrthread_spinlock_t *lock){
     if(!lock)
         return EINVAL;
-    // block_timer();
     *lock = 0;
-    // unblock_timer();
     return 0;
 }
 

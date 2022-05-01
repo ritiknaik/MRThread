@@ -64,40 +64,10 @@ int is_empty_q(thread_queue *q){
     return 0;
 }
 
-// void cleanup(thread_queue *q){
-//     node *temp = q->start;
-//     node *temp2;
-//     for(int i = 0; i < q->num; i++){
-//         temp2 = temp->next;
-//         free(temp->thread);
-//         free(temp);
-//         temp = temp2;
-//     }    
-//     q->num = 0;
-//     return;
-// }
 
 //function to find a ready thread from the queue
 //to schedule it by the scheduler
 mrthread* thread_to_sched(thread_queue* q){
-    // mrthread* p;
-    // p = dequeue_q(q);
-    // if(!p){
-    //     return NULL;
-    // }
-    // if(p->state == READY){
-    //     return p;
-    // }
-    // else{
-    //     for(int i = 0; i < q->num; i++){
-    //         enqueue_q(q, p);
-    //         p = dequeue_q(q);
-    //         if(p->state == READY){
-    //             return p;
-    //         }
-    //     }
-    // }
-    // return NULL;
     mrthread* p;
     for(int i = 0; i < (q->num); i++){
         p = dequeue_q(q);

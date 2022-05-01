@@ -144,8 +144,6 @@ int main(){
         Test(thread_create(&tid3, func2, NULL));
         void *ret;
         Test(thread_join(tid3, &ret));
-        //printf("Expected return value: 1010\n");
-        //printf("Actual return value: %d\n", *(int*)ret);
         if(*(int*)ret == 1010){
             test_cleared();
         }    
@@ -178,8 +176,6 @@ int main(){
 
         Test(thread_create(&tid, func1, NULL));
         Test(thread_join(tid, &ret));
-        //printf("Expected return value: 1\n");
-        //printf("Actual return value: %d\n", *(int*)ret);
         if(*(int*)ret == 1){
             test_cleared();
         }   
@@ -195,8 +191,6 @@ int main(){
 
         Test(thread_create(&tid, func2, NULL));
         Test(thread_join(tid, &ret));
-        //printf("Expected Exit Status is %d\n", 1010);
-        //printf("Actual   Exit Status is %d\n", *(int*) ret);
         if(*(int*)ret == 1010){
             test_cleared();
         }

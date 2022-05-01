@@ -8,7 +8,7 @@ int initll(threadll* ll){
     return 0;
 }
 
-//functio to insert to global linked list
+//function to insert to global linked list
 node* insertll(threadll* ll, mrthread* t){
     node* temp;
     temp = (node*)malloc(sizeof(node));
@@ -30,7 +30,6 @@ node* insertll(threadll* ll, mrthread* t){
 
 //function to delete a thread from linked list
 int deletell(threadll* ll, mrthread_t tid){
-    //printf("inside deletell\n");
     node* tmp = ll->start;
     if(tmp == NULL){
         return -1;
@@ -38,12 +37,10 @@ int deletell(threadll* ll, mrthread_t tid){
     if(tmp->thread->kernel_tid == tid){
         ll->start = ll->start->next;
         if(tmp->thread->stack){
-            //printf("before unmap\n");
             if(munmap(tmp->thread->stack, STACK_SIZE)){
                 return errno;
             }
         }
-        //printf("after unmap\n");
         free(tmp->thread);
         free(tmp);
         if(ll->start == NULL){
@@ -57,13 +54,6 @@ int deletell(threadll* ll, mrthread_t tid){
             if(tmp->next == ll->end){
                 ll->end = tmp;
             }
-            // if (tmp->next->thread->stack)
-            // {
-            //     if (munmap(tmp->next->thread->stack, STACK_SIZE))
-            //     {
-            //         return errno;
-            //     }
-            // }
             free(tmp->next->thread);
             free(tmp->next);
             tmp->next = tn;
