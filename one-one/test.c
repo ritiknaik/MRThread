@@ -12,26 +12,31 @@ void pattern(void){
 }
 
 int *i, infinite, mask, succ_count, fail_count;
+void test_cleared(void){
+    printf(GREEN "Test Passed\n" RESET);
+    succ_count++;
+}
+
+void test_failed(void){
+    printf(RED "Test Failed\n" RESET);
+    fail_count++;
+}
+
 void to_fail(int retval){
     if(retval != 0){
-        printf(GREEN "Test Passed\n" RESET);
-        succ_count++;
+        test_cleared();
     }
     else{
-        printf(RED "Test Failed\n" RESET);
-        fail_count++;
-    }
-        
+        test_failed();
+    }       
 }
 
 void to_pass(int retval){
     if(retval == 0){
-        printf(GREEN "Test Passed\n" RESET);
-        succ_count++;
+        test_cleared();
     }    
     else{
-        printf(RED "Test Failed\n" RESET);
-        fail_count++;
+        test_failed();
     }
         
 }
@@ -99,8 +104,7 @@ int main(){
         mrthread_t tid;
         Test(thread_create(&tid, func1, NULL));
         Test(thread_join(tid, NULL));
-        printf(GREEN "Test Passed\n" RESET);
-        succ_count++;
+        test_cleared();
     }
     pattern();
     printf("2] Thread Join Testing\n");
@@ -130,12 +134,10 @@ int main(){
         //printf("Expected return value: 1010\n");
         //printf("Actual return value: %d\n", *(int*)ret);
         if(*(int*)ret == 1010){
-            printf(GREEN "Test Passed\n" RESET);
-            succ_count++;
+            test_cleared();
         }    
         else{
-            printf(RED "Test Failed\n" RESET);
-            fail_count++;
+            test_failed();
         }
             
     }
@@ -149,8 +151,7 @@ int main(){
         for(int i = 0; i < 5; i++) {
             Test(thread_join(tid[i], NULL));
         }
-        printf(GREEN "Test Passed\n" RESET);
-        succ_count++;
+        test_cleared();
     }
 
     pattern();
@@ -166,12 +167,10 @@ int main(){
         //printf("Expected return value: 1\n");
         //printf("Actual return value: %d\n", *(int*)ret);
         if(*(int*)ret == 1){
-            printf(GREEN "Test Passed\n" RESET);
-            succ_count++;
+            test_cleared();
         }   
         else{
-            printf(RED "Test Failed\n" RESET);
-            fail_count++;
+            test_failed();
         }
     }
     /* Test 2 --> Created Thread Uses mthread_exit() */
@@ -184,12 +183,10 @@ int main(){
         //printf("Expected Exit Status is %d\n", 1010);
         //printf("Actual   Exit Status is %d\n", *(int*) ret);
         if(*(int*)ret == 1010){
-            printf(GREEN "Test Passed\n" RESET);
-            succ_count++;
+            test_cleared();
         }
         else{
-            printf(RED "Test Failed\n" RESET);
-            fail_count++;
+            test_failed();
         }
     }
 
@@ -207,8 +204,7 @@ int main(){
         to_fail(thread_kill(tid, -1));
         infinite = 0;
         Test(thread_join(tid, NULL));
-        printf(GREEN "Test Passed\n" RESET);
-        succ_count++;
+        test_cleared();
     }
 
     /* Testing of sending signal to a thread */
@@ -223,12 +219,10 @@ int main(){
         Test(thread_kill(tid, SIGUSR1));
         Test(thread_join(tid, &ret));
         if(*(int*)ret == 30){
-            printf(GREEN "Test Passed\n" RESET);
-            succ_count++;
+            test_cleared();
         }
         else{ 
-            printf(RED "Test Failed\n" RESET);
-            fail_count++;
+            test_failed();
         }
     }
 
@@ -240,17 +234,16 @@ int main(){
         Test(thread_kill(tid, SIGCONT));
         int ret = Test(thread_kill(tid, SIGKILL));
         if(ret == 0){
-            printf(GREEN "Test Passed\n" RESET);
-            succ_count++;
+            test_cleared();
         }
         else{ 
-            printf(RED "Test Failed\n" RESET);
-            fail_count++;
+            test_failed();
         }
         Test(thread_join(tid, NULL));  
     }
 
     printf(GREEN "\nSUCCESS COUNT = %d\n" RESET,succ_count);
-    printf(RED "FAILURE COUNT = %d\n" RESET, fail_count);
+    if(fail_count>0)
+        printf(RED "FAILURE COUNT = %d\n" RESET, fail_count);
     return 0;
 }
